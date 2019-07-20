@@ -37,11 +37,12 @@ trait DarnassusService extends Service {
 case class Job(id: String, dsl: String)
 
 object Job {
-  implicit val format: Format[Job] = Json.format[Job]
+  implicit val format: Format[Job] = Json.format
 }
+
 
 case class JobSubmitted(job: Job)
 
 object JobSubmitted {
-  implicit val format: Format[JobSubmitted] = Json.format[JobSubmitted]
+  implicit val format: Format[JobSubmitted] = Json.format
 }

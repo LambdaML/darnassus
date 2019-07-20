@@ -4,9 +4,10 @@ import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import com.lightbend.lagom.scaladsl.testkit.PersistentEntityTestDriver
 import com.lightbend.lagom.scaladsl.playjson.JsonSerializerRegistry
+import darnassus.persistence.{DarnassusSerializerRegistry, GreetingMessageChanged, Hello, JobCommand, JobEntity, JobEvent, JobState, UseGreetingMessage}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec}
 
-class DarnassusEntitySpec extends WordSpec with Matchers with BeforeAndAfterAll {
+class JobEntitySpec extends WordSpec with Matchers with BeforeAndAfterAll {
 
   private val system = ActorSystem("DarnassusEntitySpec",
     JsonSerializerRegistry.actorSystemSetupFor(DarnassusSerializerRegistry))
@@ -15,8 +16,8 @@ class DarnassusEntitySpec extends WordSpec with Matchers with BeforeAndAfterAll 
     TestKit.shutdownActorSystem(system)
   }
 
-  private def withTestDriver(block: PersistentEntityTestDriver[DarnassusCommand[_], DarnassusEvent, DarnassusState] => Unit): Unit = {
-    val driver = new PersistentEntityTestDriver(system, new DarnassusEntity, "darnassus-1")
+  private def withTestDriver(block: PersistentEntityTestDriver[JobCommand[_], JobEvent, JobState] => Unit): Unit = {
+    val driver = new PersistentEntityTestDriver(system, new JobEntity, "darnassus-1")
     block(driver)
     driver.getAllIssues should have size 0
   }

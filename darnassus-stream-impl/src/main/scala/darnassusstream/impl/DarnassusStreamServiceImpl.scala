@@ -9,8 +9,8 @@ import scala.concurrent.Future
 /**
   * Implementation of the DarnassusStreamService.
   */
-class DarnassusStreamServiceImpl(darnassusService: DarnassusService) extends DarnassusStreamService {
-  def stream = ServiceCall { hellos =>
-    Future.successful(hellos.mapAsync(8)(darnassusService.hello(_).invoke()))
-  }
-}
+//class DarnassusStreamServiceImpl(darnassusService: DarnassusService) extends DarnassusStreamService {
+//  def stream = ServiceCall { hellos =>
+//    Future.successful(hellos.mapAsync(8)(darnassusService.hello(_).invoke()))
+//  }
+//}

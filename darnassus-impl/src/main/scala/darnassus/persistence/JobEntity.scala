@@ -1,17 +1,19 @@
-package darnassus.impl
-
-import java.time.LocalDateTime
+package darnassus.persistence
 
 import akka.Done
-import com.lightbend.lagom.scaladsl.persistence.{AggregateEvent, AggregateEventTag, PersistentEntity}
 import com.lightbend.lagom.scaladsl.persistence.PersistentEntity.ReplyType
+import com.lightbend.lagom.scaladsl.persistence.{AggregateEvent, AggregateEventTag, PersistentEntity}
 import com.lightbend.lagom.scaladsl.playjson.{JsonSerializer, JsonSerializerRegistry}
+import darnassus.api.Job
+import darnassus.enums.JobStatus
+import darnassus.enums.JobStatus.JobStatus
+import org.joda.time.DateTime
 import play.api.libs.json.{Format, Json}
 
 import scala.collection.immutable.Seq
 
 /**
-  * This is an event sourced entity. It has a state, [[DarnassusState]], which
+  * This is an event sourced entity. It has a state, [[JobState]], which
   * stores what the greeting should be (eg, "Hello").
   *
   * Event sourced entities are interacted with by sending them commands. This
@@ -29,61 +31,61 @@ import scala.collection.immutable.Seq
   * This entity defines one event, the [[GreetingMessageChanged]] event,
   * which is emitted when a [[UseGreetingMessage]] command is received.
   */
-class DarnassusEntity extends PersistentEntity {
+class JobEntity extends PersistentEntity {
 
-  override type Command = DarnassusCommand[_]
-  override type Event = DarnassusEvent
-  override type State = DarnassusState
+  override type Command = JobCommand[_]
+  override type Event = JobEvent
+  override type State = JobState
 
   /**
     * The initial state. This is used if there is no snapshotted state to be found.
     */
-  override def initialState: DarnassusState = DarnassusState("Hello", LocalDateTime.now.toString)
+  override def initialState: JobState = JobState("", JobStatus.Loading, None, None)
 
   /**
     * An entity can define different behaviours for different states, so the behaviour
     * is a function of the current state to a set of actions.
     */
   override def behavior: Behavior = {
-    case DarnassusState(message, _) => Actions().onCommand[UseGreetingMessage, Done] {
+    case JobState(id, status, submitTs, lastUpdateTs) => Actions().onCommand[SubmitJob, Job] {
 
-      // Command handler for the UseGreetingMessage command
-      case (UseGreetingMessage(newMessage), ctx, state) =>
+      case (SubmitJob(job), ctx, state) =>
         // In response to this command, we want to first persist it as a
-        // GreetingMessageChanged event
-        ctx.thenPersist(
-          GreetingMessageChanged(newMessage)
-        ) { _ =>
+        // JobSubmitted event
+        ctx.thenPersist(JobSubmittedEvent(job)) { _ =>
           // Then once the event is successfully persisted, we respond with done.
-          ctx.reply(Done)
+          ctx.reply(job)
         }
-
-    }.onReadOnlyCommand[Hello, String] {
-
-      // Command handler for the Hello command
-      case (Hello(name), ctx, state) =>
-        // Reply with a message built from the current message, and the name of
-        // the person we're meant to say hello to.
-        ctx.reply(s"$message, $name!")
-
-    }.onEvent {
-
-      // Event handler for the GreetingMessageChanged event
-      case (GreetingMessageChanged(newMessage), state) =>
-        // We simply update the current state to use the greeting message from
-        // the event.
-        DarnassusState(newMessage, LocalDateTime.now().toString)
-
     }
+//      .onReadOnlyCommand[Hello, String] {
+//
+//      // Command handler for the Hello command
+//      case (Hello(name), ctx, state) =>
+//        // Reply with a message built from the current message, and the name of
+//        // the person we're meant to say hello to.
+//        ctx.reply(s"$message, $name!")
+//
+//    }.onEvent {
+//
+//      // Event handler for the GreetingMessageChanged event
+//      case (GreetingMessageChanged(newMessage), state) =>
+//        // We simply update the current state to use the greeting message from
+//        // the event.
+//        DarnassusState(newMessage, LocalDateTime.now().toString)
+//
+//    }
   }
 }
+
+// TODO split out events and commands into separate files
+// TODO write custom serde for enum and datetime types
 
 /**
   * The current state held by the persistent entity.
   */
-case class DarnassusState(message: String, timestamp: String)
+case class JobState(id: String, status: JobStatus, submitTimestamp: Option[DateTime], lastUpdateTimestamp: Option[DateTime])
 
-object DarnassusState {
+object JobState {
   /**
     * Format for the hello state.
     *
@@ -93,24 +95,30 @@ object DarnassusState {
     * snapshot. Hence, a JSON format needs to be declared so that it can be
     * serialized and deserialized when storing to and from the database.
     */
-  implicit val format: Format[DarnassusState] = Json.format
+  implicit val format: Format[JobState] = Json.format
 }
 
 /**
   * This interface defines all the events that the DarnassusEntity supports.
   */
-sealed trait DarnassusEvent extends AggregateEvent[DarnassusEvent] {
-  def aggregateTag: AggregateEventTag[DarnassusEvent] = DarnassusEvent.Tag
+sealed trait JobEvent extends AggregateEvent[JobEvent] {
+  def aggregateTag: AggregateEventTag[JobEvent] = JobEvent.Tag
 }
 
-object DarnassusEvent {
-  val Tag: AggregateEventTag[DarnassusEvent] = AggregateEventTag[DarnassusEvent]
+object JobEvent {
+  val Tag: AggregateEventTag[JobEvent] = AggregateEventTag[JobEvent]
+}
+
+case class JobSubmittedEvent(job: Job) extends JobEvent
+
+object JobSubmittedEvent {
+  implicit val format: Format[JobSubmittedEvent] = Json.format
 }
 
 /**
   * An event that represents a change in greeting message.
   */
-case class GreetingMessageChanged(message: String) extends DarnassusEvent
+case class GreetingMessageChanged(message: String) extends JobEvent
 
 object GreetingMessageChanged {
 
@@ -126,7 +134,13 @@ object GreetingMessageChanged {
 /**
   * This interface defines all the commands that the DarnassusEntity supports.
   */
-sealed trait DarnassusCommand[R] extends ReplyType[R]
+sealed trait JobCommand[R] extends ReplyType[R]
+
+case class SubmitJob(job: Job) extends JobCommand[Job]
+
+object SubmitJob {
+  implicit val format: Format[SubmitJob] = Json.format
+}
 
 /**
   * A command to switch the greeting message.
@@ -134,7 +148,7 @@ sealed trait DarnassusCommand[R] extends ReplyType[R]
   * It has a reply type of [[Done]], which is sent back to the caller
   * when all the events emitted by this command are successfully persisted.
   */
-case class UseGreetingMessage(message: String) extends DarnassusCommand[Done]
+case class UseGreetingMessage(message: String) extends JobCommand[Done]
 
 object UseGreetingMessage {
 
@@ -156,7 +170,7 @@ object UseGreetingMessage {
   * The reply type is String, and will contain the message to say to that
   * person.
   */
-case class Hello(name: String) extends DarnassusCommand[String]
+case class Hello(name: String) extends JobCommand[String]
 
 object Hello {
 
@@ -183,9 +197,11 @@ object Hello {
   */
 object DarnassusSerializerRegistry extends JsonSerializerRegistry {
   override def serializers: Seq[JsonSerializer[_]] = Seq(
+    JsonSerializer[SubmitJob],
+    JsonSerializer[JobSubmittedEvent],
     JsonSerializer[UseGreetingMessage],
     JsonSerializer[Hello],
     JsonSerializer[GreetingMessageChanged],
-    JsonSerializer[DarnassusState]
+    JsonSerializer[JobState]
   )
 }

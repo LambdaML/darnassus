@@ -10,6 +10,7 @@ import darnassus.api.DarnassusService
 import com.lightbend.lagom.scaladsl.broker.kafka.LagomKafkaComponents
 import com.lightbend.lagom.scaladsl.playjson.JsonSerializerRegistry
 import com.softwaremill.macwire._
+import darnassus.persistence.{DarnassusSerializerRegistry, JobEntity}
 
 class DarnassusLoader extends LagomApplicationLoader {
 
@@ -37,5 +38,5 @@ abstract class DarnassusApplication(context: LagomApplicationContext)
   override lazy val jsonSerializerRegistry: JsonSerializerRegistry = DarnassusSerializerRegistry
 
   // Register the darnassus persistent entity
-  persistentEntityRegistry.register(wire[DarnassusEntity])
+  persistentEntityRegistry.register(wire[JobEntity])
 }

@@ -18,10 +18,10 @@ class DarnassusServiceSpec extends AsyncWordSpec with Matchers with BeforeAndAft
 
   override protected def afterAll(): Unit = server.stop()
 
-  "The darnassus service" should {
+  "The Darnassus service" should {
 
     "validate a dsl" in {
-      DarnassusServiceImpl.validate("""{add-dsl-here}""") shouldBe Job("id", "testarooni")
+      DarnassusServiceImpl.validateAndParse("dsl").map(_.dsl shouldBe "dsl")
     }
 
 //    "allow responding with a custom message" in {
