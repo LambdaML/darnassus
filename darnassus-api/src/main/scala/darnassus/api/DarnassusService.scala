@@ -8,16 +8,13 @@ import com.lightbend.lagom.scaladsl.api.{Descriptor, Service, ServiceCall}
 import play.api.libs.json.{Format, Json}
 
 object DarnassusService  {
-  val TOPIC_NAME = "greetings"
+  val TOPIC_NAME = "jobs-submitted"
 }
 
 trait DarnassusService extends Service {
 
-  def submit(id: String): ServiceCall[String, String]
+  def submit(id: String): ServiceCall[String, Job]
 
-  /**
-    * This gets published to Kafka.
-    */
   def jobSubmittedTopic(): Topic[JobSubmitted]
 
   override final def descriptor: Descriptor = {
@@ -28,11 +25,6 @@ trait DarnassusService extends Service {
       )
       .withTopics(
         topic(DarnassusService.TOPIC_NAME, jobSubmittedTopic _)
-          // Kafka partitions messages, messages within the same partition will
-          // be delivered in order, to ensure that all messages for the same user
-          // go to the same partition (and hence are delivered in order with respect
-          // to that user), we configure a partition key strategy that extracts the
-          // name as the partition key.
           .addProperty(
             KafkaProperties.partitionKeyStrategy,
             PartitionKeyStrategy[JobSubmitted](_.job.id)
