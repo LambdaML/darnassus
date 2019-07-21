@@ -1,5 +1,6 @@
 package darnassus.api
 
+import akka.NotUsed
 import com.lightbend.lagom.scaladsl.api.broker.Topic
 import com.lightbend.lagom.scaladsl.api.broker.kafka.{KafkaProperties, PartitionKeyStrategy}
 import com.lightbend.lagom.scaladsl.api.transport.Method
@@ -11,7 +12,9 @@ object JobService  {
 
 trait JobService extends Service {
 
-  def submit: ServiceCall[String, Job]
+  def submit(): ServiceCall[String, Job]
+
+  def getTrackedJobs: ServiceCall[NotUsed, Seq[Job]]
 
   def jobSubmittedTopic(): Topic[JobSubmitted]
 
