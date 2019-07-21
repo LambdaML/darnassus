@@ -6,20 +6,21 @@ import com.lightbend.lagom.scaladsl.api.ServiceCall
 import com.lightbend.lagom.scaladsl.api.broker.Topic
 import com.lightbend.lagom.scaladsl.broker.TopicProducer
 import com.lightbend.lagom.scaladsl.persistence.{EventStreamElement, PersistentEntityRegistry}
-import darnassus.api.{DarnassusService, Job, JobSubmitted}
+import darnassus.api.{JobService, Job, JobSubmitted}
 import darnassus.persistence.{JobEntity, JobEvent, JobSubmittedEvent, SubmitJob}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class DarnassusServiceImpl(persistentEntityRegistry: PersistentEntityRegistry)
-                          (implicit ec: ExecutionContext) extends DarnassusService {
+class JobServiceImpl(persistentEntityRegistry: PersistentEntityRegistry)
+                    (implicit ec: ExecutionContext) extends JobService {
 
-  import DarnassusServiceImpl._
+  import JobServiceImpl._
 
-  override def submit(id: String): ServiceCall[String, Job] = ServiceCall { dsl =>
+  override def submit: ServiceCall[String, Job] = ServiceCall { dsl =>
     validateAndParse(dsl).map { job =>
       val ref = persistentEntityRegistry.refFor[JobEntity](job.id)
-      ref.ask(SubmitJob(job)).asInstanceOf[Job]
+      ref.ask(SubmitJob(job))
+      job
     }
   }
 
@@ -37,7 +38,7 @@ class DarnassusServiceImpl(persistentEntityRegistry: PersistentEntityRegistry)
   }
 }
 
-object DarnassusServiceImpl {
+object JobServiceImpl {
   def validateAndParse(dsl: String)(implicit ec: ExecutionContext): Future[Job] = {
     val id = UUID.randomUUID().toString
     Future.successful(Job(id, dsl))

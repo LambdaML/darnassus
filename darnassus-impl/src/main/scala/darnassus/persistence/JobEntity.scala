@@ -86,7 +86,7 @@ object SubmitJob {
   * The serializers are registered here, and then provided to Lagom in the
   * application loader.
   */
-object DarnassusSerializerRegistry extends JsonSerializerRegistry {
+object SerializerRegistry extends JsonSerializerRegistry {
   override def serializers: Seq[JsonSerializer[_]] = Seq(
     JsonSerializer[SubmitJob],
     JsonSerializer[JobSubmittedEvent],

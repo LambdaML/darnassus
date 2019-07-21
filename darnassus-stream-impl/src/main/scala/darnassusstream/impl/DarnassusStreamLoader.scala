@@ -5,7 +5,7 @@ import com.lightbend.lagom.scaladsl.server._
 import com.lightbend.lagom.scaladsl.devmode.LagomDevModeComponents
 import play.api.libs.ws.ahc.AhcWSComponents
 import darnassusstream.api.DarnassusStreamService
-import darnassus.api.DarnassusService
+import darnassus.api.JobService
 import com.softwaremill.macwire._
 
 //class DarnassusStreamLoader extends LagomApplicationLoader {

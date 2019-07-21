@@ -1,19 +1,17 @@
 package darnassus.api
 
-import akka.{Done, NotUsed}
 import com.lightbend.lagom.scaladsl.api.broker.Topic
 import com.lightbend.lagom.scaladsl.api.broker.kafka.{KafkaProperties, PartitionKeyStrategy}
 import com.lightbend.lagom.scaladsl.api.transport.Method
 import com.lightbend.lagom.scaladsl.api.{Descriptor, Service, ServiceCall}
-import play.api.libs.json.{Format, Json}
 
-object DarnassusService  {
+object JobService  {
   val TOPIC_NAME = "jobs-submitted"
 }
 
-trait DarnassusService extends Service {
+trait JobService extends Service {
 
-  def submit(id: String): ServiceCall[String, Job]
+  def submit: ServiceCall[String, Job]
 
   def jobSubmittedTopic(): Topic[JobSubmitted]
 
@@ -24,7 +22,7 @@ trait DarnassusService extends Service {
         restCall(Method.POST, "/submit", submit _),
       )
       .withTopics(
-        topic(DarnassusService.TOPIC_NAME, jobSubmittedTopic _)
+        topic(JobService.TOPIC_NAME, jobSubmittedTopic _)
           .addProperty(
             KafkaProperties.partitionKeyStrategy,
             PartitionKeyStrategy[JobSubmitted](_.job.id)
@@ -32,17 +30,4 @@ trait DarnassusService extends Service {
       )
       .withAutoAcl(true)
   }
-}
-
-case class Job(id: String, dsl: String)
-
-object Job {
-  implicit val format: Format[Job] = Json.format
-}
-
-
-case class JobSubmitted(job: Job)
-
-object JobSubmitted {
-  implicit val format: Format[JobSubmitted] = Json.format
 }

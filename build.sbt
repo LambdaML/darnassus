@@ -48,3 +48,5 @@ lazy val `darnassus-stream-impl` = (project in file("darnassus-stream-impl"))
     )
   )
   .dependsOn(`darnassus-stream-api`, `darnassus-api`)
+
+lagomServiceLocatorEnabled in ThisBuild := false

@@ -2,7 +2,7 @@ package darnassusstream.impl
 
 import com.lightbend.lagom.scaladsl.api.ServiceCall
 import darnassusstream.api.DarnassusStreamService
-import darnassus.api.DarnassusService
+import darnassus.api.JobService
 
 import scala.concurrent.Future
 
