@@ -1,0 +1,10 @@
+The job Coordinator should:
+* Accept, validate and submit new jobs
+* Track jobs which it has submitted (becomes the coordinator)
+* Submit for a job to be stopped
+* Submit for a job to be deleted
+* Keep track of liveness for jobs it coordinates
+* Publish its internal state so that other coordinators in the cluster are aware
+* Persist it's jobs so that they can be restarted on redeploy
+* Keep track of liveness of other coordinators
+* Rebalance jobs from a downed coordinator
